@@ -1,0 +1,225 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Role {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+// User & Auth
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          Role      @default(USER)
+  
+  accounts      Account[]
+  sessions      Session[]
+  // Optional for WebAuthn support
+  Authenticator Authenticator[]
+  
+  addresses     Address[]
+  orders        Order[]
+  reviews       Review[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+ 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  @@id([provider, providerAccountId])
+}
+ 
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+ 
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+ 
+  @@id([identifier, token])
+}
+ 
+// Optional for WebAuthn support
+model Authenticator {
+  credentialID         String  @unique
+  userId               String
+  providerAccountId    String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+ 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  @@id([userId, credentialID])
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  street    String
+  city      String
+  state     String
+  zip       String
+  country   String
+  isDefault Boolean  @default(false)
+}
+
+// Product Catalog
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  image       String?
+  
+  products    Product[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String
+  price       Decimal  @db.Decimal(10, 2)
+  compareAtPrice Decimal? @db.Decimal(10, 2)
+  
+  // Basic info
+  images      String[]
+  features    String[]
+  
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  
+  variants    ProductVariant[]
+  reviews     Review[]
+  orderItems  OrderItem[]
+  
+  isFeatured  Boolean  @default(false)
+  isArchived  Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ProductVariant {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  size      String?
+  color     String?
+  sku       String?  @unique
+  stock     Int      @default(0)
+  
+  priceAdjustment Decimal? @db.Decimal(10, 2)
+
+  orderItems OrderItem[]
+
+  @@unique([productId, size, color])
+}
+
+// Orders
+model Order {
+  id        String      @id @default(cuid())
+  userId    String?     
+  user      User?       @relation(fields: [userId], references: [id])
+  
+  status    OrderStatus @default(PENDING)
+  total     Decimal     @db.Decimal(10, 2)
+  
+  orderItems OrderItem[]
+  
+  // Snapshot of shipping info
+  shippingName    String
+  shippingAddress String
+  shippingCity    String
+  shippingZip     String
+  shippingCountry String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  // Link to product/variant
+  productId String
+  product   Product?  @relation(fields: [productId], references: [id]) // Optional in case product deleted? usually keep
+  
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+  
+  title     String
+  price     Decimal  @db.Decimal(10, 2)
+  quantity  Int
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      @default(5)
+  comment   String?
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+}
