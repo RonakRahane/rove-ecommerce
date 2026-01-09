@@ -44,29 +44,52 @@ export default async function Home() {
   const bestSellers = await getBestSellers();
 
   return (
-    <div className="flex flex-col gap-24 pb-20">
+    <div className="flex flex-col gap-14 pb-20">
 
       {/* Hero Section */}
-      <section className="relative h-[90vh] w-full flex items-center justify-center overflow-hidden">
+      <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
+        {/* Hero image — desktop: show full scene; mobile: crop onto the blazer */}
         <Image
-          src="/images/lz7VevuK2xSIXPDgDMoYCoIeCKU.jpg"
-          alt="Rove Campaign Hero"
+          src="/images/hero3.png"
+          alt="A single cream blazer hanging in dappled sunlight — Quiet Luxury collection"
           fill
-          className="object-cover object-[center_10%]"
+          className="object-cover object-[65%_30%] md:object-[center_10%]"
           priority
         />
-        <div className="absolute inset-0 bg-black/25" />
-        <div className="relative z-10 text-center text-white space-y-6 max-w-4xl px-4">
-          <p className="uppercase tracking-[0.2em] text-sm md:text-base font-medium">New Collection 2026</p>
-          <h1 className="font-display text-5xl md:text-7xl lg:text-8xl leading-none">
-            Quiet <br className="hidden md:block" /> Luxury
-          </h1>
-          <div className="pt-8">
-            <Link href="/shop">
-              <Button variant="premium" className="px-10 py-6 text-sm">
-                Discover Now
-              </Button>
-            </Link>
+
+        {/* Gradient scrim: darker at top-left (behind text), transparent over the blazer */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.05) 75%, transparent 100%)",
+          }}
+        />
+
+        {/* Text block — centered */}
+        <div className="relative z-10 text-center px-6">
+          <div className="max-w-2xl mx-auto space-y-5 text-white drop-shadow-sm">
+            <p className="uppercase tracking-[0.25em] text-xs sm:text-sm font-medium opacity-90">
+              New Collection 2026
+            </p>
+            <h1
+              className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight"
+              style={{ textShadow: "0 2px 20px rgba(0,0,0,0.25)" }}
+            >
+              Quiet{" "}
+              <br className="hidden sm:block" />
+              Luxury
+            </h1>
+            <p className="text-sm sm:text-base text-white/80 max-w-md mx-auto leading-relaxed">
+              Timeless tailoring, natural textures, and space to breathe.
+            </p>
+            <div className="pt-4">
+              <Link href="/shop">
+                <Button variant="premium" className="px-10 py-6 text-sm shadow-lg backdrop-blur-sm">
+                  Discover Now
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
